@@ -59,116 +59,52 @@ def test_create_ticket_generates_valid_uuid():
     assert str(uuid_obj) == result.id
 
 
-def test_create_ticket_priorities():
-    priorities = ["low", "medium", "high"]
-
-    for priority in priorities:
-        mock_repo = AsyncMock()
-
-        ticket_data = TicketCreate(
-            title=f"Priority {priority} issue",
-            description=f"Description for {priority} priority",
-            priority=priority,
-            isOpen=True,
-            email="user@example.com"
-        )
-
-        mock_repo.create_ticket.side_effect = lambda ticket: ticket
-
-        service = TicketService(mock_repo)
-        result = asyncio.run(service.create_ticket(ticket_data))
-
-        assert result.priority == priority
-
-
-def test_create_ticket_empty_title():
+@pytest.mark.parametrize("priority", ["low", "medium", "high"])
+def test_create_ticket_priorities(priority):
     mock_repo = AsyncMock()
 
-    ticket_data = Mock(spec=TicketCreate)
-    ticket_data.title = ""
-    ticket_data.description = "Valid description"
-    ticket_data.email = "user@example.com"
-    ticket_data.priority = "high"
-    ticket_data.isOpen = True
+    ticket_data = TicketCreate(
+        title=f"Priority {priority} issue",
+        description=f"Description for {priority} priority",
+        priority=priority,
+        isOpen=True,
+        email="user@example.com"
+    )
+
+    mock_repo.create_ticket.side_effect = lambda ticket: ticket
 
     service = TicketService(mock_repo)
+    result = asyncio.run(service.create_ticket(ticket_data))
 
-    with pytest.raises(ValueError) as exc_info:
-        asyncio.run(service.create_ticket(ticket_data))
-
-    assert str(exc_info.value) == "Title cannot be empty"
-    mock_repo.create_ticket.assert_not_called()
+    assert result.priority == priority
 
 
-def test_create_ticket_whitespace_only_title():
-    mock_repo = AsyncMock()
-
-    ticket_data = Mock(spec=TicketCreate)
-    ticket_data.title = "   "
-    ticket_data.description = "Valid description"
-    ticket_data.email = "user@example.com"
-
-    service = TicketService(mock_repo)
-
-    with pytest.raises(ValueError) as exc_info:
-        asyncio.run(service.create_ticket(ticket_data))
-
-    assert str(exc_info.value) == "Title cannot be empty"
-    mock_repo.create_ticket.assert_not_called()
-
-
-def test_create_ticket_empty_description():
-    mock_repo = AsyncMock()
-
-    ticket_data = Mock(spec=TicketCreate)
-    ticket_data.title = "Valid Title"
-    ticket_data.description = ""
-    ticket_data.email = "user@example.com"
-    ticket_data.priority = "high"
-    ticket_data.isOpen = True
-
-    service = TicketService(mock_repo)
-
-    with pytest.raises(ValueError) as exc_info:
-        asyncio.run(service.create_ticket(ticket_data))
-
-    assert str(exc_info.value) == "Description cannot be empty"
-    mock_repo.create_ticket.assert_not_called()
-
-
-def test_create_ticket_whitespace_only_description():
-    mock_repo = AsyncMock()
-
-    ticket_data = Mock(spec=TicketCreate)
-    ticket_data.title = "Valid Title"
-    ticket_data.description = "     "
-    ticket_data.email = "user@example.com"
-
-    service = TicketService(mock_repo)
-
-    with pytest.raises(ValueError) as exc_info:
-        asyncio.run(service.create_ticket(ticket_data))
-
-    assert str(exc_info.value) == "Description cannot be empty"
-    mock_repo.create_ticket.assert_not_called()
-
-
-def test_create_ticket_empty_email():
+@pytest.mark.parametrize("invalid_field,invalid_value,expected_error", [
+    ("title", "", "Title cannot be empty"),
+    ("title", "   ", "Title cannot be empty"),
+    ("description", "", "Description cannot be empty"),
+    ("description", "   ", "Description cannot be empty"),
+    ("email", "", "Email cannot be empty"),
+    ("email", "   ", "Email cannot be empty"),
+])
+def test_create_ticket_empty_or_whitespace_fields(invalid_field, invalid_value, expected_error):
     mock_repo = AsyncMock()
 
     ticket_data = Mock(spec=TicketCreate)
     ticket_data.title = "Valid Title"
     ticket_data.description = "Valid Description"
-    ticket_data.email = "   "
+    ticket_data.email = "user@example.com"
     ticket_data.priority = "high"
     ticket_data.isOpen = True
+
+    setattr(ticket_data, invalid_field, invalid_value)
 
     service = TicketService(mock_repo)
 
     with pytest.raises(ValueError) as exc_info:
         asyncio.run(service.create_ticket(ticket_data))
 
-    assert str(exc_info.value) == "Email cannot be empty"
+    assert str(exc_info.value) == expected_error
     mock_repo.create_ticket.assert_not_called()
 
 
@@ -183,14 +119,15 @@ def test_create_ticket_none_data():
     mock_repo.create_ticket.assert_not_called()
 
 
-def test_create_ticket_with_is_open_false():
+@pytest.mark.parametrize("is_open", [True, False])
+def test_create_ticket_is_open_states(is_open):
     mock_repo = AsyncMock()
 
     ticket_data = TicketCreate(
-        title="Closed ticket on creation",
-        description="Ticket created as closed",
+        title="Ticket status test",
+        description="Testing open status",
         priority="low",
-        isOpen=False,
+        isOpen=is_open,
         email="user@example.com"
     )
 
@@ -200,7 +137,7 @@ def test_create_ticket_with_is_open_false():
 
     result = asyncio.run(service.create_ticket(ticket_data))
 
-    assert result.isOpen is False
+    assert result.isOpen is is_open
 
 
 def test_create_ticket_repo_returns_none():
