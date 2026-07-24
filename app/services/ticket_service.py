@@ -19,31 +19,21 @@ class TicketService:
 
     async def get_ticket(self, ticket_id: Optional[UUID] = None, priority: Optional[str] = None, isOpen: Optional[bool] = None):
         if ticket_id:
-            ticket = await self.repo.get_ticket_by_id(ticket_id, priority, isOpen)
+            ticket = await self.repo.get_ticket_by_id(ticket_id) 
+        
             if ticket is None:
                 raise ValueError("Ticket not found")
+            
             if priority is not None and ticket.priority != priority:
                 raise ValueError("Ticket not found")
             if isOpen is not None and ticket.isOpen != isOpen:
                 raise ValueError("Ticket not found")
 
             return ticket
-
-        priority_tickets = []
-        isOpen_tickets = []
-
-        if priority:
-            priority_tickets = await self.repo.get_all_tickets(priority, isOpen)
-        if isOpen is not None:
-            isOpen_tickets = await self.repo.get_all_tickets(priority, isOpen)
-        if priority and isOpen is not None:
-            return priority_tickets + isOpen_tickets
-        if priority and priority_tickets is not None:
-            return priority_tickets
-        if isOpen is not None and isOpen_tickets is not None:
-            return isOpen_tickets
-        t = await self.repo.get_all_tickets(priority, isOpen)
-        return t
+        tickets = await self.repo.get_all_tickets(priority=priority, isOpen=isOpen)
+    
+        return tickets
+    
 
     async def create_ticket(self, ticket_data):
         if not ticket_data:
