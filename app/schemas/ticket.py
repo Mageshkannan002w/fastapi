@@ -19,7 +19,7 @@ class TicketCreate(BaseModel):
     
 
 class TicketCreateResponse(BaseModel):
-    ticket_id: str
+    ticket_id: UUID
     status: int
     message: str
      
@@ -46,13 +46,13 @@ class TicketUpdateData(BaseModel):
     priority: Optional[PriorityEnum] = None
     isOpen: Optional[bool] = None
 class TicketUpdateResponse(BaseModel):
-    ticket_id: str
+    ticket_id: UUID
     status: int
     message: str
 class TicketDelete(BaseModel):
-    ticket_id: str
+    ticket_id: UUID
 class TicketDeleteResponse(BaseModel):
-    ticket_id: str
+    ticket_id: UUID
     status: int
     message: str
 
