@@ -76,6 +76,41 @@ def test_update_ticket_wrong_id_not_found():
     mock_repo.update_ticket.assert_not_called()
 
 
+def test_update_ticket_priority_change():
+    mock_repo = AsyncMock()
+    ticket_id = uuid4()
+
+    existing_ticket = Ticket(
+        id=str(ticket_id),
+        title="Title",
+        description="Desc",
+        priority="low",
+        isOpen=True,
+        email="user@example.com"
+    )
+
+    updated_ticket = Ticket(
+        id=str(ticket_id),
+        title="Title",
+        description="Desc",
+        priority="high",
+        isOpen=True,
+        email="user@example.com"
+    )
+
+    update_data = TicketUpdateData(priority="high")
+
+    mock_repo.get_ticket_by_id.return_value = existing_ticket
+    mock_repo.update_ticket.return_value = updated_ticket
+
+    service = TicketService(mock_repo)
+
+    result = asyncio.run(service.update_ticket(ticket_id, update_data))
+
+    assert result.priority == "high"
+    mock_repo.update_ticket.assert_called_once_with(ticket_id, {"priority": "high"})
+
+
 def test_update_ticket_multiple_fields():
     mock_repo = AsyncMock()
     ticket_id = uuid4()

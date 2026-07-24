@@ -32,6 +32,18 @@ def test_delete_ticket_success():
     mock_repo.delete_ticket.assert_called_once_with(ticket_id)
 
 
+def test_delete_ticket_none_id():
+    mock_repo = Mock()
+    service = TicketService(mock_repo)
+
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(service.delete_ticket(None))
+
+    assert str(exc_info.value) == "Ticket ID is required"
+    mock_repo.get_ticket_by_id.assert_not_called()
+    mock_repo.delete_ticket.assert_not_called()
+
+
 def test_delete_ticket_not_found():
     mock_repo = Mock()
     ticket_id = uuid4()

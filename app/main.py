@@ -23,7 +23,7 @@ app.include_router(ai_router)
 @app.get("/ready")
 def ready_check():
     return {"message": "Yeah Application works fine"}
-@app.get("/ready")
+@app.get("/health")
 async def health_check(db: AsyncSession = Depends(get_db)):
     return {
         "session_exists": db is not None

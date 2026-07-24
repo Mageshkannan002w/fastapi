@@ -10,7 +10,7 @@ class TicketApiUser(HttpUser):
  
     @task(2)
     def list_tickets(self) -> None:
-        self.client.get("/tickets", name="GET /tickets")
+        self.client.get("/tickets/get_tickets", name="GET /tickets")
  
     @task(1)
     def create_ticket(self) -> None:

@@ -85,6 +85,28 @@ def test_get_ticket_by_id_is_open_mismatch():
     assert str(exc_info.value) == "Ticket not found"
 
 
+def test_get_ticket_by_id_matching_priority_and_is_open():
+    mock_repo = Mock()
+    ticket_id = uuid4()
+    mock_ticket = Ticket(
+        id=str(ticket_id),
+        title="Matched Ticket",
+        description="Desc",
+        priority="high",
+        isOpen=True,
+        email="user@example.com"
+    )
+    mock_repo.get_ticket_by_id = AsyncMock(return_value=mock_ticket)
+
+    service = TicketService(mock_repo)
+
+    result = asyncio.run(service.get_ticket(ticket_id=ticket_id, priority="high", isOpen=True))
+
+    assert result == mock_ticket
+    assert result.priority == "high"
+    assert result.isOpen is True
+
+
 def test_get_all_tickets():
     mock_repo = Mock()
     mock_ticket = Ticket(
@@ -103,6 +125,18 @@ def test_get_all_tickets():
 
     assert len(result) == 1
     assert result[0] == mock_ticket
+    mock_repo.get_all_tickets.assert_called_once_with(None, None)
+
+
+def test_get_tickets_empty_list():
+    mock_repo = Mock()
+    mock_repo.get_all_tickets = AsyncMock(return_value=[])
+
+    service = TicketService(mock_repo)
+
+    result = asyncio.run(service.get_ticket())
+
+    assert result == []
     mock_repo.get_all_tickets.assert_called_once_with(None, None)
 
 
@@ -146,3 +180,24 @@ def test_get_tickets_filter_by_is_open():
     assert len(result) == 1
     assert result[0].isOpen is True
     mock_repo.get_all_tickets.assert_called_once_with(None, True)
+
+
+def test_get_tickets_filter_by_priority_and_is_open():
+    mock_repo = Mock()
+    mock_ticket = Ticket(
+        id=str(uuid4()),
+        title="Low Priority Closed",
+        description="Desc",
+        priority="low",
+        isOpen=False,
+        email="user@example.com"
+    )
+    mock_repo.get_all_tickets = AsyncMock(return_value=[mock_ticket])
+
+    service = TicketService(mock_repo)
+
+    result = asyncio.run(service.get_ticket(priority="low", isOpen=False))
+
+    assert len(result) == 2
+    assert result[0] == mock_ticket
+    assert result[1] == mock_ticket

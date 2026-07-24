@@ -100,6 +100,23 @@ def test_create_ticket_empty_title():
     mock_repo.create_ticket.assert_not_called()
 
 
+def test_create_ticket_whitespace_only_title():
+    mock_repo = AsyncMock()
+
+    ticket_data = Mock(spec=TicketCreate)
+    ticket_data.title = "   "
+    ticket_data.description = "Valid description"
+    ticket_data.email = "user@example.com"
+
+    service = TicketService(mock_repo)
+
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(service.create_ticket(ticket_data))
+
+    assert str(exc_info.value) == "Title cannot be empty"
+    mock_repo.create_ticket.assert_not_called()
+
+
 def test_create_ticket_empty_description():
     mock_repo = AsyncMock()
 
@@ -109,6 +126,23 @@ def test_create_ticket_empty_description():
     ticket_data.email = "user@example.com"
     ticket_data.priority = "high"
     ticket_data.isOpen = True
+
+    service = TicketService(mock_repo)
+
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(service.create_ticket(ticket_data))
+
+    assert str(exc_info.value) == "Description cannot be empty"
+    mock_repo.create_ticket.assert_not_called()
+
+
+def test_create_ticket_whitespace_only_description():
+    mock_repo = AsyncMock()
+
+    ticket_data = Mock(spec=TicketCreate)
+    ticket_data.title = "Valid Title"
+    ticket_data.description = "     "
+    ticket_data.email = "user@example.com"
 
     service = TicketService(mock_repo)
 
@@ -136,6 +170,37 @@ def test_create_ticket_empty_email():
 
     assert str(exc_info.value) == "Email cannot be empty"
     mock_repo.create_ticket.assert_not_called()
+
+
+def test_create_ticket_none_data():
+    mock_repo = AsyncMock()
+    service = TicketService(mock_repo)
+
+    with pytest.raises(ValueError) as exc_info:
+        asyncio.run(service.create_ticket(None))
+
+    assert str(exc_info.value) == "Ticket data is required"
+    mock_repo.create_ticket.assert_not_called()
+
+
+def test_create_ticket_with_is_open_false():
+    mock_repo = AsyncMock()
+
+    ticket_data = TicketCreate(
+        title="Closed ticket on creation",
+        description="Ticket created as closed",
+        priority="low",
+        isOpen=False,
+        email="user@example.com"
+    )
+
+    mock_repo.create_ticket.side_effect = lambda ticket: ticket
+
+    service = TicketService(mock_repo)
+
+    result = asyncio.run(service.create_ticket(ticket_data))
+
+    assert result.isOpen is False
 
 
 def test_create_ticket_repo_returns_none():
