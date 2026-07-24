@@ -49,7 +49,7 @@ def test_update_ticket_fields(update_data, expected_updates):
     result = asyncio.run(service.update_ticket(ticket_id, update_data))
 
     assert result == updated_ticket
-    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id, None, None)
+    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id)
     mock_repo.update_ticket.assert_called_once_with(ticket_id, expected_updates)
 
 
@@ -83,5 +83,5 @@ def test_update_ticket_wrong_id_not_found():
         asyncio.run(service.update_ticket(wrong_ticket_id, update_data))
 
     assert str(exc_info.value) == "Ticket not found"
-    mock_repo.get_ticket_by_id.assert_called_once_with(wrong_ticket_id, None, None)
+    mock_repo.get_ticket_by_id.assert_called_once_with(wrong_ticket_id)
     mock_repo.update_ticket.assert_not_called()

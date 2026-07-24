@@ -28,7 +28,7 @@ def test_delete_ticket_success():
     result = asyncio.run(service.delete_ticket(ticket_id))
 
     assert result is True
-    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id, None, None)
+    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id)
     mock_repo.delete_ticket.assert_called_once_with(ticket_id)
 
 
@@ -64,7 +64,7 @@ def test_delete_ticket_error_scenarios(get_by_id_result, delete_result, expected
         asyncio.run(service.delete_ticket(ticket_id))
 
     assert str(exc_info.value) == expected_error
-    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id, None, None)
+    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id)
     if get_by_id_result is not None:
         mock_repo.delete_ticket.assert_called_once_with(ticket_id)
     else:

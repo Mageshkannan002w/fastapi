@@ -26,7 +26,7 @@ def test_get_ticket_by_id():
 
     assert result == mock_ticket
     assert result.title == "Test Ticket"
-    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id, None, None)
+    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id)
 
 
 def test_get_ticket_by_id_not_found():
@@ -40,7 +40,7 @@ def test_get_ticket_by_id_not_found():
         asyncio.run(service.get_ticket(ticket_id=ticket_id))
 
     assert str(exc_info.value) == "Ticket not found"
-    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id, None, None)
+    mock_repo.get_ticket_by_id.assert_called_once_with(ticket_id)
 
 
 @pytest.mark.parametrize("mismatched_kwargs", [
@@ -100,13 +100,13 @@ def test_get_ticket_by_id_matching_filters(priority_param, is_open_param):
     assert result.isOpen is is_open_param
 
 
-@pytest.mark.parametrize("filter_kwargs,expected_repo_args", [
-    ({}, (None, None)),
-    ({"priority": "high"}, ("high", None)),
-    ({"isOpen": True}, (None, True)),
-    ({"priority": "low", "isOpen": False}, ("low", False)),
+@pytest.mark.parametrize("filter_kwargs", [
+    {},
+    {"priority": "high"},
+    {"isOpen": True},
+    {"priority": "low", "isOpen": False},
 ])
-def test_get_tickets_filters(filter_kwargs, expected_repo_args):
+def test_get_tickets_filters(filter_kwargs):
     mock_repo = Mock()
     mock_ticket = Ticket(
         id=str(uuid4()),
@@ -124,7 +124,10 @@ def test_get_tickets_filters(filter_kwargs, expected_repo_args):
 
     assert len(result) >= 1
     assert result[0] == mock_ticket
-    mock_repo.get_all_tickets.assert_called_with(*expected_repo_args)
+    mock_repo.get_all_tickets.assert_called_with(
+        priority=filter_kwargs.get("priority"),
+        isOpen=filter_kwargs.get("isOpen")
+    )
 
 
 def test_get_tickets_empty_list():
@@ -136,4 +139,4 @@ def test_get_tickets_empty_list():
     result = asyncio.run(service.get_ticket())
 
     assert result == []
-    mock_repo.get_all_tickets.assert_called_once_with(None, None)
+    mock_repo.get_all_tickets.assert_called_once_with(priority=None, isOpen=None)
